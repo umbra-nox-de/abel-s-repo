@@ -61,5 +61,5 @@ jobs:
           echo "$INFO"
 
           echo ""
-          echo "PLIST CONTENTS:"
-          plutil -p "$INFO" | head -100
+          echo "FIRST 100 LINES:"
+          head -100 "$INFO"
