@@ -30,45 +30,6 @@ jobs:
           gh release download "${{ github.event.release.tag_name }}" \
             --dir assets
 
-      - name: Find IPA
-        run: |
-          IPA=$(find assets -name "*.ipa" | head -n 1)
-
-          if [ -z "$IPA" ]; then
-            echo "No IPA found"
-            exit 1
-          fi
-
-          echo "IPA_PATH=$IPA" >> $GITHUB_ENV
-
-      - name: Extract IPA
-        run: |
-          mkdir -p extracted
-          unzip -q "$IPA_PATH" -d extracted
-
-      - name: Find App Bundle
-        run: |
-          APP_DIR=$(find extracted/Payload -maxdepth 1 -name "*.app" | head -n 1)
-
-          if [ -z "$APP_DIR" ]; then
-            echo "No .app found"
-            exit 1
-          fi
-
-          echo "APP_DIR=$APP_DIR" >> $GITHUB_ENV
-
-      - name: Read Metadata
-        run: |
-          plistutil -i "$APP_DIR/Info.plist" -f json -o info.json
-
-          APP_NAME=$(jq -r '.CFBundleDisplayName // .CFBundleName // "Unknown"' info.json)
-          BUNDLE_ID=$(jq -r '.CFBundleIdentifier // "Unknown"' info.json)
-          VERSION=$(jq -r '.CFBundleShortVersionString // .CFBundleVersion // "Unknown"' info.json)
-
-          echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
-          echo "BUNDLE_ID=$BUNDLE_ID" >> $GITHUB_ENV
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-
       - name: Ensure apps.json Exists
         run: |
           if [ ! -f apps.json ]; then
@@ -81,42 +42,83 @@ jobs:
           EOF
           fi
 
-      - name: Update apps.json
+      - name: Process All IPAs
         run: |
           RELEASE_TAG="${{ github.event.release.tag_name }}"
 
-          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/$(basename "$IPA_PATH")"
+          IPA_COUNT=$(find assets -name "*.ipa" | wc -l)
 
-          ICON_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/icons/default.png"
+          if [ "$IPA_COUNT" -eq 0 ]; then
+            echo "No IPA files found"
+            exit 1
+          fi
 
-          jq \
-            --arg bundle "$BUNDLE_ID" \
-            '.apps |= map(select(.bundleIdentifier != $bundle))' \
-            apps.json > tmp.json
+          find assets -name "*.ipa" | while read IPA_PATH
+          do
+            echo "===================================="
+            echo "Processing: $IPA_PATH"
+            echo "===================================="
 
-          mv tmp.json apps.json
+            rm -rf extracted
+            mkdir -p extracted
 
-          jq \
-            --arg name "$APP_NAME" \
-            --arg bundle "$BUNDLE_ID" \
-            --arg version "$VERSION" \
-            --arg date "$(date +%F)" \
-            --arg download "$DOWNLOAD_URL" \
-            --arg icon "$ICON_URL" \
-            '
-            .apps += [{
-              name: $name,
-              bundleIdentifier: $bundle,
-              developerName: "Abel",
-              version: $version,
-              versionDate: $date,
-              downloadURL: $download,
-              localizedDescription: ($name + " IPA"),
-              iconURL: $icon
-            }]
-            ' apps.json > tmp.json
+            unzip -q "$IPA_PATH" -d extracted
 
-          mv tmp.json apps.json
+            APP_DIR=$(find extracted/Payload -maxdepth 1 -name "*.app" | head -n 1)
+
+            if [ -z "$APP_DIR" ]; then
+              echo "Skipping: No .app found"
+              continue
+            fi
+
+            plistutil -i "$APP_DIR/Info.plist" -f json -o info.json
+
+            APP_NAME=$(jq -r '.CFBundleDisplayName // .CFBundleName // "Unknown"' info.json)
+            BUNDLE_ID=$(jq -r '.CFBundleIdentifier // "Unknown"' info.json)
+            VERSION=$(jq -r '.CFBundleShortVersionString // .CFBundleVersion // "Unknown"' info.json)
+
+            IPA_FILE=$(basename "$IPA_PATH")
+
+            DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${IPA_FILE}"
+
+            ICON_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/icons/default.png"
+
+            echo "App Name: $APP_NAME"
+            echo "Bundle ID: $BUNDLE_ID"
+            echo "Version: $VERSION"
+
+            jq \
+              --arg bundle "$BUNDLE_ID" \
+              '.apps |= map(select(.bundleIdentifier != $bundle))' \
+              apps.json > tmp.json
+
+            mv tmp.json apps.json
+
+            jq \
+              --arg name "$APP_NAME" \
+              --arg bundle "$BUNDLE_ID" \
+              --arg version "$VERSION" \
+              --arg date "$(date +%F)" \
+              --arg download "$DOWNLOAD_URL" \
+              --arg icon "$ICON_URL" \
+              '
+              .apps += [{
+                name: $name,
+                bundleIdentifier: $bundle,
+                developerName: "Abel",
+                version: $version,
+                versionDate: $date,
+                downloadURL: $download,
+                localizedDescription: ($name + " IPA"),
+                iconURL: $icon
+              }]
+              ' apps.json > tmp.json
+
+            mv tmp.json apps.json
+          done
+
+          echo "Final apps.json:"
+          cat apps.json
 
       - name: Commit Changes
         env:
