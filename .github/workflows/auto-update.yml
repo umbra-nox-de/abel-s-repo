@@ -41,9 +41,6 @@ jobs:
 
           echo "IPA_PATH=$IPA" >> $GITHUB_ENV
 
-          echo "Found IPA:"
-          echo "$IPA"
-
       - name: Extract IPA
         run: |
           mkdir -p extracted
@@ -60,9 +57,6 @@ jobs:
 
           echo "APP_DIR=$APP_DIR" >> $GITHUB_ENV
 
-          echo "Found App:"
-          echo "$APP_DIR"
-
       - name: Read Metadata
         run: |
           plistutil -i "$APP_DIR/Info.plist" -f json -o info.json
@@ -74,37 +68,6 @@ jobs:
           echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
           echo "BUNDLE_ID=$BUNDLE_ID" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-          echo "=============================="
-          echo "App Name: $APP_NAME"
-          echo "Bundle ID: $BUNDLE_ID"
-          echo "Version: $VERSION"
-          echo "=============================="
-
-      - name: Find Icons
-        run: |
-          echo "Potential icon files:"
-          find "$APP_DIR" -type f | grep -i icon || true
-
-      - name: Extract Best Icon
-        run: |
-          mkdir -p icons
-
-          ICON=$(find "$APP_DIR" -name "AppIcon60x60@3x.png" | head -n 1)
-
-          if [ -z "$ICON" ]; then
-            ICON=$(find "$APP_DIR" -iname "*icon*.png" | head -n 1)
-          fi
-
-          if [ -z "$ICON" ]; then
-            echo "No icon found"
-            exit 1
-          fi
-
-          cp "$ICON" "icons/$BUNDLE_ID.png"
-
-          echo "Selected icon:"
-          echo "$ICON"
 
       - name: Ensure apps.json Exists
         run: |
@@ -124,7 +87,7 @@ jobs:
 
           DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/$(basename "$IPA_PATH")"
 
-          ICON_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/icons/$BUNDLE_ID.png"
+          ICON_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/icons/default.png"
 
           jq \
             --arg bundle "$BUNDLE_ID" \
@@ -155,9 +118,6 @@ jobs:
 
           mv tmp.json apps.json
 
-          echo "Updated apps.json:"
-          cat apps.json
-
       - name: Commit Changes
         env:
           BRANCH_NAME: ${{ github.event.repository.default_branch }}
@@ -165,7 +125,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add apps.json icons/
+          git add apps.json
 
           if git diff --cached --quiet; then
             echo "No changes to commit"
