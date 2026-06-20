@@ -106,35 +106,52 @@ jobs:
           echo "Selected icon:"
           echo "$ICON"
 
-      - name: Initialize apps.json
+      - name: Ensure apps.json Exists
         run: |
           if [ ! -f apps.json ]; then
-            echo "[]" > apps.json
+            cat > apps.json <<'EOF'
+          {
+            "name": "Abel's Repo",
+            "identifier": "com.umbra.repo",
+            "apps": []
+          }
+          EOF
           fi
 
       - name: Update apps.json
         run: |
+          RELEASE_TAG="${{ github.event.release.tag_name }}"
+
+          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/$(basename "$IPA_PATH")"
+
+          ICON_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/icons/$BUNDLE_ID.png"
+
           jq \
             --arg bundle "$BUNDLE_ID" \
-            'map(select(.bundleId != $bundle))' \
+            '.apps |= map(select(.bundleIdentifier != $bundle))' \
             apps.json > tmp.json
 
           mv tmp.json apps.json
 
           jq \
-            --arg bundle "$BUNDLE_ID" \
             --arg name "$APP_NAME" \
+            --arg bundle "$BUNDLE_ID" \
             --arg version "$VERSION" \
-            --arg icon "icons/$BUNDLE_ID.png" \
-            --arg tag "${{ github.event.release.tag_name }}" \
-            '. += [{
-              bundleId: $bundle,
+            --arg date "$(date +%F)" \
+            --arg download "$DOWNLOAD_URL" \
+            --arg icon "$ICON_URL" \
+            '
+            .apps += [{
               name: $name,
+              bundleIdentifier: $bundle,
+              developerName: "Abel",
               version: $version,
-              releaseTag: $tag,
-              icon: $icon
-            }]' \
-            apps.json > tmp.json
+              versionDate: $date,
+              downloadURL: $download,
+              localizedDescription: ($name + " IPA"),
+              iconURL: $icon
+            }]
+            ' apps.json > tmp.json
 
           mv tmp.json apps.json
 
