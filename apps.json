@@ -23,14 +23,24 @@
       "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/sulfur.png"
     },
     {
-  "name": "MovieBoxPro",
-  "bundleIdentifier": "com.xd.mbp31",
-  "developerName": "Abel",
-  "version": "15.6",
-  "versionDate": "2026-06-20",
-  "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/V4/MovieBoxPro_15.6.ipa",
-  "localizedDescription": "MovieBoxPro 15.6.",
-  "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/movieboxpro.png"
+      "name": "MovieBoxPro",
+      "bundleIdentifier": "com.xd.mbp31",
+      "developerName": "Abel",
+      "version": "15.6",
+      "versionDate": "2026-06-20",
+      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/V4/MovieBoxPro_15.6.ipa",
+      "localizedDescription": "MovieBoxPro 15.6.",
+      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/movieboxpro.png"
+    },
+    {
+      "name": "Shattered Pixel Dungeon",
+      "bundleIdentifier": "com.shatteredpixel.shatteredpixeldungeon.apple",
+      "developerName": "Abel",
+      "version": "2.2.2",
+      "versionDate": "2026-06-20",
+      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/102/Shattered-Pixel.ipa",
+      "localizedDescription": "Shattered Pixel Dungeon IPA",
+      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/com.shatteredpixel.shatteredpixeldungeon.apple.png"
     }
   ]
 }
