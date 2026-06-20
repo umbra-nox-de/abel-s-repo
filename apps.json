@@ -51,6 +51,26 @@
       "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/a/Sora.ipa",
       "localizedDescription": "Sora IPA",
       "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/sulfur.png"
+    },
+    {
+      "name": "BHTikTokPlus",
+      "bundleIdentifier": "com.zhiliaoapp.musically",
+      "developerName": "Abel",
+      "version": "45.5.0",
+      "versionDate": "2026-06-20",
+      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/V20/BHTikTokPlus.45.5.0.ipa",
+      "localizedDescription": "BHTikTokPlus IPA",
+      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
+    },
+    {
+      "name": "Nightclub Tycoon ✨",
+      "bundleIdentifier": "com.iterationone.nightclubtycoon",
+      "developerName": "Abel",
+      "version": "1.76.003",
+      "versionDate": "2026-06-20",
+      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/V20/Nightclub-Tycoon-IPAOMTK.COM.ipa",
+      "localizedDescription": "Nightclub Tycoon ✨ IPA",
+      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
     }
   ]
 }
