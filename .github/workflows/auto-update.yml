@@ -1,12 +1,18 @@
-name: Test Workflow
+name: IPA Processor
 
 on:
-  workflow_dispatch:
+  push:
+    paths:
+      - 'incoming/*.ipa'
 
 jobs:
-  hello:
+  detect:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Say Hello
-        run: echo "Workflow is working!"
+      - uses: actions/checkout@v4
+
+      - name: List Uploaded IPA
+        run: |
+          echo "IPA Found:"
+          ls incoming/*.ipa
