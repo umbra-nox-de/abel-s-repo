@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v4
+
       - name: Show Release Information
         run: |
           echo "Release Name: ${{ github.event.release.name }}"
@@ -21,6 +23,7 @@ jobs:
           mkdir assets
 
           gh release download ${{ github.event.release.tag_name }} \
+            --repo ${{ github.repository }} \
             --dir assets
 
           echo "Downloaded files:"
