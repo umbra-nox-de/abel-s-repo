@@ -21,6 +21,9 @@ jobs:
             --repo ${{ github.repository }} \
             --dir assets
 
+          echo "Downloaded files:"
+          ls -la assets
+
       - name: Find IPA
         run: |
           IPA=$(find assets -name "*.ipa" | head -n 1)
@@ -43,3 +46,14 @@ jobs:
 
           echo "=== PAYLOAD ==="
           find extracted/Payload -type d | head -20
+
+      - name: Read App Metadata
+        run: |
+          APP=$(find extracted/Payload -name "*.app" | head -n 1)
+
+          echo "APP FOLDER:"
+          echo "$APP"
+
+          echo ""
+          echo "INFO.PLIST FILE:"
+          find "$APP" -name "Info.plist"
