@@ -21,6 +21,16 @@
       "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/V2/Sulfur.ipa",
       "localizedDescription": "Sulfur IPA.",
       "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/sulfur.png"
+    },
+    {
+  "name": "MovieBoxPro",
+  "bundleIdentifier": "com.xd.mbp31",
+  "developerName": "Abel",
+  "version": "14.5",
+  "versionDate": "2026-06-20",
+  "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/V3/MovieBoxPro_14.5.ipa",
+  "localizedDescription": "MovieBoxPro 14.5.",
+  "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/movieboxpro.png"
     }
   ]
 }
