@@ -159,6 +159,8 @@ jobs:
           cat apps.json
 
       - name: Commit Changes
+        env:
+          BRANCH_NAME: ${{ github.event.repository.default_branch }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -171,4 +173,5 @@ jobs:
           fi
 
           git commit -m "Update app catalog"
-          git push
+
+          git push origin HEAD:$BRANCH_NAME
