@@ -1,107 +1,63 @@
 name: Release Processor
 
 on:
-release:
-types: [published]
+  release:
+    types:
+      - published
 
 permissions:
-contents: write
+  contents: write
 
 jobs:
-process:
-runs-on: ubuntu-latest
+  process:
+    runs-on: ubuntu-latest
 
-```
-steps:
-  - uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  - name: Download Release Assets
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    run: |
-      mkdir assets
+      - name: Download Release Assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p assets
 
-      gh release download ${{ github.event.release.tag_name }} \
-        --repo ${{ github.repository }} \
-        --dir assets
+          gh release download "${{ github.event.release.tag_name }}" \
+            --dir assets
 
-  - name: Install Tools
-    run: |
-      sudo apt-get update
-      sudo apt-get install -y unzip jq
+      - name: Find IPA
+        run: |
+          IPA=$(find assets -name "*.ipa" | head -n 1)
 
-  - name: Extract IPA
-    run: |
-      IPA=$(find assets -name "*.ipa" | head -n 1)
+          if [ -z "$IPA" ]; then
+            echo "No IPA found"
+            exit 1
+          fi
 
-      mkdir extracted
+          echo "IPA_PATH=$IPA" >> $GITHUB_ENV
 
-      unzip -q "$IPA" -d extracted
+      - name: Extract IPA
+        run: |
+          mkdir extracted
+          unzip -q "$IPA_PATH" -d extracted
 
-  - name: Extract Metadata
-    run: |
-      INFO=$(find extracted/Payload -name Info.plist | head -n 1)
+      - name: Read Metadata
+        run: |
+          APP_DIR=$(find extracted/Payload -maxdepth 1 -name "*.app" | head -n 1)
 
-      APP_NAME=$(grep -A1 CFBundleDisplayName "$INFO" | tail -1 | sed -E 's/<[^>]+>//g' | xargs)
+          APP_NAME=$(/usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" "$APP_DIR/Info.plist" 2>/dev/null || true)
 
-      if [ -z "$APP_NAME" ]; then
-        APP_NAME=$(grep -A1 CFBundleName "$INFO" | tail -1 | sed -E 's/<[^>]+>//g' | xargs)
-      fi
+          if [ -z "$APP_NAME" ]; then
+            APP_NAME=$(/usr/libexec/PlistBuddy -c "Print :CFBundleName" "$APP_DIR/Info.plist")
+          fi
 
-      BUNDLE=$(grep -A1 CFBundleIdentifier "$INFO" | tail -1 | sed -E 's/<[^>]+>//g' | xargs)
+          BUNDLE_ID=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_DIR/Info.plist")
+          VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP_DIR/Info.plist")
 
-      VERSION=$(grep -A1 CFBundleShortVersionString "$INFO" | tail -1 | sed -E 's/<[^>]+>//g' | xargs)
+          echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
+          echo "BUNDLE_ID=$BUNDLE_ID" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
-      echo "BUNDLE=$BUNDLE" >> $GITHUB_ENV
-      echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-      echo "App: $APP_NAME"
-      echo "Bundle: $BUNDLE"
-      echo "Version: $VERSION"
-
-  - name: Extract Icon
-    run: |
-      APP=$(find extracted/Payload -name "*.app" | head -n 1)
-
-      mkdir -p icons
-
-      ICON=$(find "$APP" -iname "*icon*.png" | sort | tail -n 1)
-
-      if [ -n "$ICON" ]; then
-        cp "$ICON" "icons/${BUNDLE}.png"
-      fi
-
-  - name: Update apps.json
-    run: |
-      jq --arg name "$APP_NAME" \
-         --arg bundle "$BUNDLE" \
-         --arg version "$VERSION" \
-         --arg url "${{ github.event.release.assets[0].browser_download_url }}" \
-         --arg icon "https://umbra-nox-de.github.io/abel-s-repo/icons/${BUNDLE}.png" \
-         '
-         .apps += [{
-           name: $name,
-           bundleIdentifier: $bundle,
-           developerName: "Abel",
-           version: $version,
-           versionDate: "2026-06-20",
-           downloadURL: $url,
-           localizedDescription: $name,
-           iconURL: $icon
-         }]
-         ' apps.json > apps.tmp
-
-      mv apps.tmp apps.json
-
-  - name: Commit Changes
-    run: |
-      git config user.name "github-actions"
-      git config user.email "github-actions@github.com"
-
-      git add apps.json icons
-
-      git commit -m "Auto-update repo" || exit 0
-
-      git push
-```
+          echo "App Name: $APP_NAME"
+          echo "Bundle ID: $BUNDLE_ID"
+          echo "Version: $VERSION"
