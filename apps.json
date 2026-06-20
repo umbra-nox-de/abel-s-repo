@@ -13,16 +13,6 @@
       "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/youtubeoled.png"
     },
     {
-      "name": "Sora",
-      "bundleIdentifier": "me.cranci.sulfur",
-      "developerName": "Abel",
-      "version": "1.0.0",
-      "versionDate": "2026-06-20",
-      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/V2/Sulfur.ipa",
-      "localizedDescription": "Sulfur IPA.",
-      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/sulfur.png"
-    },
-    {
       "name": "MovieBoxPro",
       "bundleIdentifier": "com.xd.mbp31",
       "developerName": "Abel",
@@ -50,6 +40,16 @@
       "versionDate": "2026-06-20",
       "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/V19/Tubi_8.5.1_iOS_NoAds.ipa",
       "localizedDescription": "Tubi IPA",
+      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
+    },
+    {
+      "name": "Sora",
+      "bundleIdentifier": "me.cranci.sulfur",
+      "developerName": "Abel",
+      "version": "1.0.1",
+      "versionDate": "2026-06-20",
+      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/a/Sora.ipa",
+      "localizedDescription": "Sora IPA",
       "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
     }
   ]
