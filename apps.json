@@ -41,6 +41,16 @@
       "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/102/Shattered-Pixel.ipa",
       "localizedDescription": "Shattered Pixel Dungeon IPA",
       "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/com.shatteredpixel.shatteredpixeldungeon.apple.png"
+    },
+    {
+      "name": "Tubi",
+      "bundleIdentifier": "com.adrise.tubitv",
+      "developerName": "Abel",
+      "version": "8.5.1",
+      "versionDate": "2026-06-20",
+      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/V18/Tubi_8.5.1_iOS_NoAds.ipa",
+      "localizedDescription": "Tubi IPA",
+      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/com.adrise.tubitv.png"
     }
   ]
 }
