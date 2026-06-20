@@ -1,65 +1,107 @@
 name: Release Processor
 
 on:
-  release:
-    types: [published]
+release:
+types: [published]
+
+permissions:
+contents: write
 
 jobs:
-  release-info:
-    runs-on: ubuntu-latest
+process:
+runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+```
+steps:
+  - uses: actions/checkout@v4
 
-      - name: Download Release Assets
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          mkdir assets
+  - name: Download Release Assets
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    run: |
+      mkdir assets
 
-          gh release download ${{ github.event.release.tag_name }} \
-            --repo ${{ github.repository }} \
-            --dir assets
+      gh release download ${{ github.event.release.tag_name }} \
+        --repo ${{ github.repository }} \
+        --dir assets
 
-          echo "Downloaded files:"
-          ls -la assets
+  - name: Install Tools
+    run: |
+      sudo apt-get update
+      sudo apt-get install -y unzip jq
 
-      - name: Find IPA
-        run: |
-          IPA=$(find assets -name "*.ipa" | head -n 1)
+  - name: Extract IPA
+    run: |
+      IPA=$(find assets -name "*.ipa" | head -n 1)
 
-          echo "IPA FOUND:"
-          echo "$IPA"
+      mkdir extracted
 
-      - name: Install unzip
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y unzip
+      unzip -q "$IPA" -d extracted
 
-      - name: Extract IPA
-        run: |
-          IPA=$(find assets -name "*.ipa" | head -n 1)
+  - name: Extract Metadata
+    run: |
+      INFO=$(find extracted/Payload -name Info.plist | head -n 1)
 
-          mkdir extracted
+      APP_NAME=$(grep -A1 CFBundleDisplayName "$INFO" | tail -1 | sed -E 's/<[^>]+>//g' | xargs)
 
-          unzip -q "$IPA" -d extracted
+      if [ -z "$APP_NAME" ]; then
+        APP_NAME=$(grep -A1 CFBundleName "$INFO" | tail -1 | sed -E 's/<[^>]+>//g' | xargs)
+      fi
 
-          echo "=== PAYLOAD ==="
-          find extracted/Payload -type d | head -20
+      BUNDLE=$(grep -A1 CFBundleIdentifier "$INFO" | tail -1 | sed -E 's/<[^>]+>//g' | xargs)
 
-      - name: Read App Metadata
-        run: |
-          APP=$(find extracted/Payload -name "*.app" | head -n 1)
+      VERSION=$(grep -A1 CFBundleShortVersionString "$INFO" | tail -1 | sed -E 's/<[^>]+>//g' | xargs)
 
-          echo "APP FOLDER:"
-          echo "$APP"
+      echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
+      echo "BUNDLE=$BUNDLE" >> $GITHUB_ENV
+      echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-          INFO="$APP/Info.plist"
+      echo "App: $APP_NAME"
+      echo "Bundle: $BUNDLE"
+      echo "Version: $VERSION"
 
-          echo ""
-          echo "INFO FILE:"
-          echo "$INFO"
+  - name: Extract Icon
+    run: |
+      APP=$(find extracted/Payload -name "*.app" | head -n 1)
 
-          echo ""
-          echo "FIRST 100 LINES:"
-          head -100 "$INFO"
+      mkdir -p icons
+
+      ICON=$(find "$APP" -iname "*icon*.png" | sort | tail -n 1)
+
+      if [ -n "$ICON" ]; then
+        cp "$ICON" "icons/${BUNDLE}.png"
+      fi
+
+  - name: Update apps.json
+    run: |
+      jq --arg name "$APP_NAME" \
+         --arg bundle "$BUNDLE" \
+         --arg version "$VERSION" \
+         --arg url "${{ github.event.release.assets[0].browser_download_url }}" \
+         --arg icon "https://umbra-nox-de.github.io/abel-s-repo/icons/${BUNDLE}.png" \
+         '
+         .apps += [{
+           name: $name,
+           bundleIdentifier: $bundle,
+           developerName: "Abel",
+           version: $version,
+           versionDate: "2026-06-20",
+           downloadURL: $url,
+           localizedDescription: $name,
+           iconURL: $icon
+         }]
+         ' apps.json > apps.tmp
+
+      mv apps.tmp apps.json
+
+  - name: Commit Changes
+    run: |
+      git config user.name "github-actions"
+      git config user.email "github-actions@github.com"
+
+      git add apps.json icons
+
+      git commit -m "Auto-update repo" || exit 0
+
+      git push
+```
