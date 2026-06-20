@@ -1,157 +1,157 @@
 name: Release Processor
 
 on:
-release:
-types:
-- published
+  release:
+    types:
+      - published
 
 permissions:
-contents: write
+  contents: write
 
 jobs:
-process:
-runs-on: ubuntu-latest
+  process:
+    runs-on: ubuntu-latest
 
-steps:
-  - name: Checkout
-    uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  - name: Install Dependencies
-    run: |
-      sudo apt-get update
-      sudo apt-get install -y libplist-utils jq
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libplist-utils jq
 
-  - name: Download Release Assets
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    run: |
-      mkdir -p assets
+      - name: Download Release Assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p assets
 
-      gh release download "${{ github.event.release.tag_name }}" \
-        --dir assets
+          gh release download "${{ github.event.release.tag_name }}" \
+            --dir assets
 
-  - name: Find IPA
-    run: |
-      IPA=$(find assets -name "*.ipa" | head -n 1)
+      - name: Find IPA
+        run: |
+          IPA=$(find assets -name "*.ipa" | head -n 1)
 
-      if [ -z "$IPA" ]; then
-        echo "No IPA found"
-        exit 1
-      fi
+          if [ -z "$IPA" ]; then
+            echo "No IPA found"
+            exit 1
+          fi
 
-      echo "IPA_PATH=$IPA" >> $GITHUB_ENV
+          echo "IPA_PATH=$IPA" >> $GITHUB_ENV
 
-      echo "Found IPA:"
-      echo "$IPA"
+          echo "Found IPA:"
+          echo "$IPA"
 
-  - name: Extract IPA
-    run: |
-      mkdir -p extracted
-      unzip -q "$IPA_PATH" -d extracted
+      - name: Extract IPA
+        run: |
+          mkdir -p extracted
+          unzip -q "$IPA_PATH" -d extracted
 
-  - name: Find App Bundle
-    run: |
-      APP_DIR=$(find extracted/Payload -maxdepth 1 -name "*.app" | head -n 1)
+      - name: Find App Bundle
+        run: |
+          APP_DIR=$(find extracted/Payload -maxdepth 1 -name "*.app" | head -n 1)
 
-      if [ -z "$APP_DIR" ]; then
-        echo "No .app found"
-        exit 1
-      fi
+          if [ -z "$APP_DIR" ]; then
+            echo "No .app found"
+            exit 1
+          fi
 
-      echo "APP_DIR=$APP_DIR" >> $GITHUB_ENV
+          echo "APP_DIR=$APP_DIR" >> $GITHUB_ENV
 
-      echo "Found App:"
-      echo "$APP_DIR"
+          echo "Found App:"
+          echo "$APP_DIR"
 
-  - name: Read Metadata
-    run: |
-      plistutil -i "$APP_DIR/Info.plist" -f json -o info.json
+      - name: Read Metadata
+        run: |
+          plistutil -i "$APP_DIR/Info.plist" -f json -o info.json
 
-      APP_NAME=$(jq -r '.CFBundleDisplayName // .CFBundleName // "Unknown"' info.json)
-      BUNDLE_ID=$(jq -r '.CFBundleIdentifier // "Unknown"' info.json)
-      VERSION=$(jq -r '.CFBundleShortVersionString // .CFBundleVersion // "Unknown"' info.json)
+          APP_NAME=$(jq -r '.CFBundleDisplayName // .CFBundleName // "Unknown"' info.json)
+          BUNDLE_ID=$(jq -r '.CFBundleIdentifier // "Unknown"' info.json)
+          VERSION=$(jq -r '.CFBundleShortVersionString // .CFBundleVersion // "Unknown"' info.json)
 
-      echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
-      echo "BUNDLE_ID=$BUNDLE_ID" >> $GITHUB_ENV
-      echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
+          echo "BUNDLE_ID=$BUNDLE_ID" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      echo "=============================="
-      echo "App Name: $APP_NAME"
-      echo "Bundle ID: $BUNDLE_ID"
-      echo "Version: $VERSION"
-      echo "=============================="
+          echo "=============================="
+          echo "App Name: $APP_NAME"
+          echo "Bundle ID: $BUNDLE_ID"
+          echo "Version: $VERSION"
+          echo "=============================="
 
-  - name: Find Icons
-    run: |
-      echo "Potential icon files:"
-      find "$APP_DIR" -type f | grep -i icon || true
+      - name: Find Icons
+        run: |
+          echo "Potential icon files:"
+          find "$APP_DIR" -type f | grep -i icon || true
 
-  - name: Extract Best Icon
-    run: |
-      mkdir -p icons
+      - name: Extract Best Icon
+        run: |
+          mkdir -p icons
 
-      ICON=$(find "$APP_DIR" -name "AppIcon60x60@3x.png" | head -n 1)
+          ICON=$(find "$APP_DIR" -name "AppIcon60x60@3x.png" | head -n 1)
 
-      if [ -z "$ICON" ]; then
-        ICON=$(find "$APP_DIR" -iname "*icon*.png" | head -n 1)
-      fi
+          if [ -z "$ICON" ]; then
+            ICON=$(find "$APP_DIR" -iname "*icon*.png" | head -n 1)
+          fi
 
-      if [ -z "$ICON" ]; then
-        echo "No icon found"
-        exit 1
-      fi
+          if [ -z "$ICON" ]; then
+            echo "No icon found"
+            exit 1
+          fi
 
-      cp "$ICON" "icons/$BUNDLE_ID.png"
+          cp "$ICON" "icons/$BUNDLE_ID.png"
 
-      echo "Selected icon:"
-      echo "$ICON"
+          echo "Selected icon:"
+          echo "$ICON"
 
-  - name: Initialize apps.json
-    run: |
-      if [ ! -f apps.json ]; then
-        echo "[]" > apps.json
-      fi
+      - name: Initialize apps.json
+        run: |
+          if [ ! -f apps.json ]; then
+            echo "[]" > apps.json
+          fi
 
-  - name: Update apps.json
-    run: |
-      jq \
-        --arg bundle "$BUNDLE_ID" \
-        'map(select(.bundleId != $bundle))' \
-        apps.json > tmp.json
+      - name: Update apps.json
+        run: |
+          jq \
+            --arg bundle "$BUNDLE_ID" \
+            'map(select(.bundleId != $bundle))' \
+            apps.json > tmp.json
 
-      mv tmp.json apps.json
+          mv tmp.json apps.json
 
-      jq \
-        --arg bundle "$BUNDLE_ID" \
-        --arg name "$APP_NAME" \
-        --arg version "$VERSION" \
-        --arg icon "icons/$BUNDLE_ID.png" \
-        --arg tag "${{ github.event.release.tag_name }}" \
-        '. += [{
-          bundleId: $bundle,
-          name: $name,
-          version: $version,
-          releaseTag: $tag,
-          icon: $icon
-        }]' \
-        apps.json > tmp.json
+          jq \
+            --arg bundle "$BUNDLE_ID" \
+            --arg name "$APP_NAME" \
+            --arg version "$VERSION" \
+            --arg icon "icons/$BUNDLE_ID.png" \
+            --arg tag "${{ github.event.release.tag_name }}" \
+            '. += [{
+              bundleId: $bundle,
+              name: $name,
+              version: $version,
+              releaseTag: $tag,
+              icon: $icon
+            }]' \
+            apps.json > tmp.json
 
-      mv tmp.json apps.json
+          mv tmp.json apps.json
 
-      echo "Updated apps.json:"
-      cat apps.json
+          echo "Updated apps.json:"
+          cat apps.json
 
-  - name: Commit Changes
-    run: |
-      git config user.name "github-actions[bot]"
-      git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Commit Changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      git add apps.json icons/
+          git add apps.json icons/
 
-      if git diff --cached --quiet; then
-        echo "No changes to commit"
-        exit 0
-      fi
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
 
-      git commit -m "Update app catalog"
-      git push
+          git commit -m "Update app catalog"
+          git push
