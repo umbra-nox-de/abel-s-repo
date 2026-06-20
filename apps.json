@@ -9,8 +9,18 @@
       "version": "21.02.3",
       "versionDate": "2026-06-20",
       "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/V1/YouTubeOLED_21.02.3_Premium_@thisismanpreets_apptesters.org.ipa",
-      "localizedDescription": "Practice repository app.",
+      "localizedDescription": "YouTube OLED build.",
       "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/youtubeoled.png"
+    },
+    {
+      "name": "Sulfur",
+      "bundleIdentifier": "me.cranci.sulfur",
+      "developerName": "Abel",
+      "version": "1.0.0",
+      "versionDate": "2026-06-20",
+      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/V2/Sulfur.ipa",
+      "localizedDescription": "Sulfur IPA.",
+      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/sulfur.png"
     }
   ]
 }
