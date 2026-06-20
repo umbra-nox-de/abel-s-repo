@@ -1,0 +1,16 @@
+{
+  "name": "Abel's Repo",
+  "identifier": "com.umbra.repo",
+  "apps": [
+    {
+      "name": "YouTube OLED",
+      "bundleIdentifier": "com.google.ios.youtube",
+      "developerName": "Abel",
+      "version": "21.02.3",
+      "versionDate": "2026-06-20",
+      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/V1/YouTubeOLED_21.02.3_Premium_@thisismanpreets_apptesters.org.ipa",
+      "localizedDescription": "Practice repository app.",
+      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/youtubeoled.png"
+    }
+  ]
+}
