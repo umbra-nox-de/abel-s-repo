@@ -54,6 +54,12 @@ jobs:
           echo "APP FOLDER:"
           echo "$APP"
 
+          INFO="$APP/Info.plist"
+
           echo ""
-          echo "INFO.PLIST FILE:"
-          find "$APP" -name "Info.plist"
+          echo "INFO FILE:"
+          echo "$INFO"
+
+          echo ""
+          echo "PLIST CONTENTS:"
+          plutil -p "$INFO" | head -100
