@@ -16,6 +16,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libplist-utils jq
+
       - name: Download Release Assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -36,28 +41,47 @@ jobs:
 
           echo "IPA_PATH=$IPA" >> $GITHUB_ENV
 
+          echo "Found IPA:"
+          echo "$IPA"
+
       - name: Extract IPA
         run: |
-          mkdir extracted
+          mkdir -p extracted
           unzip -q "$IPA_PATH" -d extracted
 
-      - name: Read Metadata
+      - name: Find App Bundle
         run: |
           APP_DIR=$(find extracted/Payload -maxdepth 1 -name "*.app" | head -n 1)
 
-          APP_NAME=$(/usr/libexec/PlistBuddy -c "Print :CFBundleDisplayName" "$APP_DIR/Info.plist" 2>/dev/null || true)
-
-          if [ -z "$APP_NAME" ]; then
-            APP_NAME=$(/usr/libexec/PlistBuddy -c "Print :CFBundleName" "$APP_DIR/Info.plist")
+          if [ -z "$APP_DIR" ]; then
+            echo "No .app found"
+            exit 1
           fi
 
-          BUNDLE_ID=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP_DIR/Info.plist")
-          VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP_DIR/Info.plist")
+          echo "APP_DIR=$APP_DIR" >> $GITHUB_ENV
+
+          echo "Found App:"
+          echo "$APP_DIR"
+
+      - name: Read Metadata
+        run: |
+          plistutil -i "$APP_DIR/Info.plist" -f json -o info.json
+
+          APP_NAME=$(jq -r '.CFBundleDisplayName // .CFBundleName // "Unknown"' info.json)
+          BUNDLE_ID=$(jq -r '.CFBundleIdentifier // "Unknown"' info.json)
+          VERSION=$(jq -r '.CFBundleShortVersionString // .CFBundleVersion // "Unknown"' info.json)
 
           echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
           echo "BUNDLE_ID=$BUNDLE_ID" >> $GITHUB_ENV
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
+          echo "=============================="
           echo "App Name: $APP_NAME"
           echo "Bundle ID: $BUNDLE_ID"
           echo "Version: $VERSION"
+          echo "=============================="
+
+      - name: Find Icons
+        run: |
+          echo "Potential icon files:"
+          find "$APP_DIR" -type f | grep -i icon || true
