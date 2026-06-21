@@ -61,56 +61,6 @@
       "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/V20/BHTikTokPlus.45.5.0.ipa",
       "localizedDescription": "BHTikTokPlus IPA",
       "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
-    },
-    {
-      "name": "Nightclub Tycoon ✨",
-      "bundleIdentifier": "com.iterationone.nightclubtycoon",
-      "developerName": "Abel",
-      "version": "1.76.003",
-      "versionDate": "2026-06-20",
-      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/V20/Nightclub-Tycoon-IPAOMTK.COM.ipa",
-      "localizedDescription": "Nightclub Tycoon ✨ IPA",
-      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
-    },
-    {
-      "name": "Crunchyroll",
-      "bundleIdentifier": "com.crunchyroll.iphone",
-      "developerName": "Abel",
-      "version": "3.5.1",
-      "versionDate": "2026-06-21",
-      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/Multi/Crunchyroll++.ipa",
-      "localizedDescription": "Crunchyroll IPA",
-      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
-    },
-    {
-      "name": "Instagram",
-      "bundleIdentifier": "com.burbn.instagram",
-      "developerName": "Abel",
-      "version": "124.0",
-      "versionDate": "2026-06-21",
-      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/Multi/Instagram++.ipa",
-      "localizedDescription": "Instagram IPA",
-      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
-    },
-    {
-      "name": "Duolingo",
-      "bundleIdentifier": "com.duolingo.DuolingoMobile",
-      "developerName": "Abel",
-      "version": "6.2.0",
-      "versionDate": "2026-06-21",
-      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/Multi/Duolingo++.ipa",
-      "localizedDescription": "Duolingo IPA",
-      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
-    },
-    {
-      "name": "Comic Box",
-      "bundleIdentifier": "comicreader.net.ios",
-      "developerName": "Abel",
-      "version": "1.3.3",
-      "versionDate": "2026-06-21",
-      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/Multi/ComicBox.ipa",
-      "localizedDescription": "Comic Box IPA",
-      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
     }
   ]
 }
