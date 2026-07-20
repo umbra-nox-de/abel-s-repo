@@ -91,6 +91,46 @@
       "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/multi/DragonCity.-.KamoHacks.26.9.0.ipa",
       "localizedDescription": "DragonCity  IPA",
       "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
+    },
+    {
+      "name": "Facetune ",
+      "bundleIdentifier": "com.lightricks.Facetune2",
+      "developerName": "Abel",
+      "version": "26.20",
+      "versionDate": "2026-07-20",
+      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/multi_v4/Facetune.-.KamoHacks.26.20.ipa",
+      "localizedDescription": "Facetune  IPA",
+      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
+    },
+    {
+      "name": "Block Blast! ",
+      "bundleIdentifier": "com.blockpuzzle.us.ios",
+      "developerName": "Abel",
+      "version": "7.2.4",
+      "versionDate": "2026-07-20",
+      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/multi_v4/Block.Blast.-.KamoHacks.7.2.4.ipa",
+      "localizedDescription": "Block Blast!  IPA",
+      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
+    },
+    {
+      "name": "Instagram",
+      "bundleIdentifier": "com.burbn.instagram",
+      "developerName": "Abel",
+      "version": "436.0.0",
+      "versionDate": "2026-07-20",
+      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/multi_v4/Instagram.-.KamoHacks.436.0.0.ipa",
+      "localizedDescription": "Instagram IPA",
+      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
+    },
+    {
+      "name": "Facebook",
+      "bundleIdentifier": "com.facebook.Facebook",
+      "developerName": "Abel",
+      "version": "567.0.0",
+      "versionDate": "2026-07-20",
+      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/multi_v4/Facebook.-.KamoHacks.567.0.0.ipa",
+      "localizedDescription": "Facebook IPA",
+      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
     }
   ]
 }
