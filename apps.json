@@ -13,16 +13,6 @@
       "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/youtubeoled.png"
     },
     {
-      "name": "MovieBoxPro",
-      "bundleIdentifier": "com.xd.mbp31",
-      "developerName": "Abel",
-      "version": "15.6",
-      "versionDate": "2026-06-20",
-      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/V4/MovieBoxPro_15.6.ipa",
-      "localizedDescription": "MovieBoxPro 15.6.",
-      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/movieboxpro.png"
-    },
-    {
       "name": "Shattered Pixel Dungeon",
       "bundleIdentifier": "com.shatteredpixel.shatteredpixeldungeon.apple",
       "developerName": "Abel",
@@ -130,6 +120,46 @@
       "versionDate": "2026-07-20",
       "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/multi_v4/Facebook.-.KamoHacks.567.0.0.ipa",
       "localizedDescription": "Facebook IPA",
+      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
+    },
+    {
+      "name": "MovieBoxPro",
+      "bundleIdentifier": "com.xd.mbp31",
+      "developerName": "Abel",
+      "version": "16.0",
+      "versionDate": "2026-08-28",
+      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/v23/MovieBoxPro_16.0.ipa",
+      "localizedDescription": "MovieBoxPro IPA",
+      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
+    },
+    {
+      "name": "Spaceflight Simulator ",
+      "bundleIdentifier": "com.StefMorojna.SpaceflightSimulator",
+      "developerName": "Abel",
+      "version": "1.600.20",
+      "versionDate": "2026-08-28",
+      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/v23/Spaceflight_Simulator_1.600.20_iajl68uc.ipa",
+      "localizedDescription": "Spaceflight Simulator  IPA",
+      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
+    },
+    {
+      "name": "Stremio",
+      "bundleIdentifier": "com.stremio.pal",
+      "developerName": "Abel",
+      "version": "2.0.7",
+      "versionDate": "2026-08-28",
+      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/v23/Stremio-2.0.7.ipa",
+      "localizedDescription": "Stremio IPA",
+      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
+    },
+    {
+      "name": "Charades",
+      "bundleIdentifier": "com.dmytrocheverda.Charades",
+      "developerName": "Abel",
+      "version": "2.11.0",
+      "versionDate": "2026-08-28",
+      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/v23/Charades_2.11.0_62ksfmiq.ipa",
+      "localizedDescription": "Charades IPA",
       "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
     }
   ]
