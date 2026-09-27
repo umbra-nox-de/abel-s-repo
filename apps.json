@@ -161,6 +161,36 @@
       "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/v23/Charades_2.11.0_62ksfmiq.ipa",
       "localizedDescription": "Charades IPA",
       "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
+    },
+    {
+      "name": "Solar Smash",
+      "bundleIdentifier": "com.paradyme.solarsmasher",
+      "developerName": "Abel",
+      "version": "2.6.7",
+      "versionDate": "2026-09-27",
+      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/v24/Solar_Smash_2.6.7_7vw7fgx5.ipa",
+      "localizedDescription": "Solar Smash IPA",
+      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
+    },
+    {
+      "name": "AiEnhancerestes",
+      "bundleIdentifier": "aienhancerestes",
+      "developerName": "Abel",
+      "version": "2.2",
+      "versionDate": "2026-09-27",
+      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/v24/AI_Video_Generator_2.2_350wcshw.ipa",
+      "localizedDescription": "AiEnhancerestes IPA",
+      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
+    },
+    {
+      "name": "Sherlock",
+      "bundleIdentifier": "com.Ai-Face-Search",
+      "developerName": "Abel",
+      "version": "2.0",
+      "versionDate": "2026-09-27",
+      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/v24/Sherlock_2.0_496g9r57.ipa",
+      "localizedDescription": "Sherlock IPA",
+      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
     }
   ]
 }
