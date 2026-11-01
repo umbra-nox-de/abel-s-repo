@@ -65,6 +65,10 @@ jobs:
             mkdir -p extracted
             unzip -q "$IPA_PATH" -d extracted
 
+            if [ ! -d extracted/Payload ]; then
+              echo "::warning::Skipping ${IPA_PATH}: Payload directory is missing"
+              continue
+            fi
             APP_DIR=$(find extracted/Payload -maxdepth 1 -type d -name '*.app' -print -quit)
             if [ -z "$APP_DIR" ] || [ ! -f "$APP_DIR/Info.plist" ]; then
               echo "::warning::Skipping ${IPA_PATH}: no valid .app/Info.plist found"
