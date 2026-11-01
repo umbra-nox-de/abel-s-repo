@@ -19,19 +19,20 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libplist-utils jq
+          sudo apt-get install -y libplist-utils jq unzip
 
       - name: Download Release Assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           mkdir -p assets
+          gh release download "${{ github.event.release.tag_name }}" --dir assets
 
-          gh release download "${{ github.event.release.tag_name }}" \
-            --dir assets
-
-      - name: Ensure apps.json Exists
+      - name: Ensure Catalog and Icon Directory Exist
         run: |
+          set -euo pipefail
+          mkdir -p icons
           if [ ! -f apps.json ]; then
             cat > apps.json <<'EOF'
           {
@@ -41,99 +42,124 @@ jobs:
           }
           EOF
           fi
+          jq -e '.apps | type == "array"' apps.json >/dev/null
 
       - name: Process All IPAs
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          REPOSITORY: ${{ github.repository }}
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+          REPOSITORY_NAME: ${{ github.event.repository.name }}
         run: |
-          RELEASE_TAG="${{ github.event.release.tag_name }}"
+          set -euo pipefail
 
-          IPA_COUNT=$(find assets -name "*.ipa" | wc -l)
-
-          if [ "$IPA_COUNT" -eq 0 ]; then
-            echo "No IPA files found"
+          mapfile -d '' IPA_FILES < <(find assets -type f -iname '*.ipa' -print0)
+          if [ "${#IPA_FILES[@]}" -eq 0 ]; then
+            echo "No IPA files found in release ${RELEASE_TAG}"
             exit 1
           fi
 
-          find assets -name "*.ipa" | while read IPA_PATH
-          do
-            echo "===================================="
-            echo "Processing: $IPA_PATH"
-            echo "===================================="
-
+          for IPA_PATH in "${IPA_FILES[@]}"; do
+            echo "Processing: ${IPA_PATH}"
             rm -rf extracted
             mkdir -p extracted
-
             unzip -q "$IPA_PATH" -d extracted
 
-            APP_DIR=$(find extracted/Payload -maxdepth 1 -name "*.app" | head -n 1)
-
-            if [ -z "$APP_DIR" ]; then
-              echo "Skipping: No .app found"
+            APP_DIR=$(find extracted/Payload -maxdepth 1 -type d -name '*.app' -print -quit)
+            if [ -z "$APP_DIR" ] || [ ! -f "$APP_DIR/Info.plist" ]; then
+              echo "::warning::Skipping ${IPA_PATH}: no valid .app/Info.plist found"
               continue
             fi
 
             plistutil -i "$APP_DIR/Info.plist" -f json -o info.json
 
             APP_NAME=$(jq -r '.CFBundleDisplayName // .CFBundleName // "Unknown"' info.json)
-            BUNDLE_ID=$(jq -r '.CFBundleIdentifier // "Unknown"' info.json)
+            BUNDLE_ID=$(jq -r '.CFBundleIdentifier // empty' info.json)
             VERSION=$(jq -r '.CFBundleShortVersionString // .CFBundleVersion // "Unknown"' info.json)
 
+            if [ -z "$BUNDLE_ID" ] || [ "$BUNDLE_ID" = "Unknown" ]; then
+              echo "::warning::Skipping ${IPA_PATH}: bundle identifier is missing"
+              continue
+            fi
+
             IPA_FILE=$(basename "$IPA_PATH")
+            IPA_FILE_URL=$(jq -rn --arg value "$IPA_FILE" '$value | @uri')
+            DOWNLOAD_URL="https://github.com/${REPOSITORY}/releases/download/${RELEASE_TAG}/${IPA_FILE_URL}"
 
-            DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${IPA_FILE}"
+            ICON_FILE="icons/${BUNDLE_ID}.png"
+            ICON_FOUND="false"
 
-            ICON_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/icons/default.png"
+            # Prefer icon filenames declared in Info.plist. Many modern apps keep
+            # their icons only in Assets.car, which this workflow cannot decode.
+            mapfile -t ICON_NAMES < <(jq -r '
+              [
+                .CFBundleIcons.CFBundlePrimaryIcon.CFBundleIconFiles[]?,
+                .CFBundleIconFiles[]?
+              ] | .[]
+            ' info.json 2>/dev/null || true)
 
-            echo "App Name: $APP_NAME"
-            echo "Bundle ID: $BUNDLE_ID"
-            echo "Version: $VERSION"
+            for ICON_NAME in "${ICON_NAMES[@]}"; do
+              ICON_CANDIDATE=$(find "$APP_DIR" -type f -iname "${ICON_NAME}*.png" -printf '%s\t%p\n' | sort -nr | head -n 1 | cut -f2-)
+              if [ -n "$ICON_CANDIDATE" ]; then
+                cp "$ICON_CANDIDATE" "$ICON_FILE"
+                ICON_FOUND="true"
+                break
+              fi
+            done
+
+            if [ "$ICON_FOUND" = "false" ]; then
+              echo "::warning::No standalone PNG icon found for ${BUNDLE_ID}; using icons/default.png"
+              ICON_URL="https://${REPOSITORY_OWNER}.github.io/${REPOSITORY_NAME}/icons/default.png"
+            else
+              ICON_URL="https://${REPOSITORY_OWNER}.github.io/${REPOSITORY_NAME}/${ICON_FILE}"
+            fi
+
+            echo "App: ${APP_NAME}"
+            echo "Bundle ID: ${BUNDLE_ID}"
+            echo "Version: ${VERSION}"
 
             jq \
               --arg bundle "$BUNDLE_ID" \
-              '.apps |= map(select(.bundleIdentifier != $bundle))' \
-              apps.json > tmp.json
-
-            mv tmp.json apps.json
-
-            jq \
               --arg name "$APP_NAME" \
-              --arg bundle "$BUNDLE_ID" \
               --arg version "$VERSION" \
-              --arg date "$(date +%F)" \
+              --arg date "$(date -u +%F)" \
               --arg download "$DOWNLOAD_URL" \
               --arg icon "$ICON_URL" \
               '
-              .apps += [{
-                name: $name,
-                bundleIdentifier: $bundle,
-                developerName: "Abel",
-                version: $version,
-                versionDate: $date,
-                downloadURL: $download,
-                localizedDescription: ($name + " IPA"),
-                iconURL: $icon
-              }]
-              ' apps.json > tmp.json
-
-            mv tmp.json apps.json
+              .apps = (.apps // [])
+              | .apps |= map(select(.bundleIdentifier != $bundle))
+              | .apps += [{
+                  name: $name,
+                  bundleIdentifier: $bundle,
+                  developerName: "Abel",
+                  version: $version,
+                  versionDate: $date,
+                  downloadURL: $download,
+                  localizedDescription: ($name + " IPA"),
+                  iconURL: $icon
+                }]
+              ' apps.json > apps.json.tmp
+            mv apps.json.tmp apps.json
           done
 
-          echo "Final apps.json:"
-          cat apps.json
+          echo "Catalog validation:"
+          jq -e '.apps | type == "array"' apps.json >/dev/null
+          jq -r '.apps[] | [.name, .bundleIdentifier, .version] | @tsv' apps.json
 
       - name: Commit Changes
         env:
           BRANCH_NAME: ${{ github.event.repository.default_branch }}
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add apps.json
+          git add apps.json icons/
 
           if git diff --cached --quiet; then
-            echo "No changes to commit"
+            echo "No catalog or icon changes to commit"
             exit 0
           fi
 
-          git commit -m "Update app catalog"
-
-          git push origin HEAD:$BRANCH_NAME
+          git commit -m "Update app catalog and icons"
+          git push origin "HEAD:${BRANCH_NAME}"
