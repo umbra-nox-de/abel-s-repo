@@ -4,6 +4,20 @@ on:
   release:
     types:
       - published
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Existing GitHub release tag to process (for example v25)"
+        required: true
+        type: string
+      run_mode:
+        description: "Test creates a downloadable artifact; Production updates the live catalog"
+        required: true
+        type: choice
+        options:
+          - test
+          - production
+        default: test
 
 permissions:
   contents: write
@@ -11,8 +25,33 @@ permissions:
 jobs:
   process:
     runs-on: ubuntu-latest
-
     steps:
+      - name: Resolve release and run mode
+        id: settings
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_RELEASE_TAG: ${{ github.event.release.tag_name }}
+          INPUT_RELEASE_TAG: ${{ inputs.release_tag }}
+          INPUT_RUN_MODE: ${{ inputs.run_mode }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "release" ]; then
+            RELEASE_TAG="$EVENT_RELEASE_TAG"
+            RUN_MODE="production"
+          else
+            RELEASE_TAG="$INPUT_RELEASE_TAG"
+            RUN_MODE="$INPUT_RUN_MODE"
+          fi
+
+          if [ -z "$RELEASE_TAG" ]; then
+            echo "::error::A release tag is required"
+            exit 1
+          fi
+
+          echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "run_mode=$RUN_MODE" >> "$GITHUB_OUTPUT"
+          echo "Processing release $RELEASE_TAG in $RUN_MODE mode"
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -24,10 +63,11 @@ jobs:
       - name: Download Release Assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.settings.outputs.release_tag }}
         run: |
           set -euo pipefail
           mkdir -p assets
-          gh release download "${{ github.event.release.tag_name }}" --dir assets
+          gh release download "$RELEASE_TAG" --dir assets
 
       - name: Ensure Catalog and Icon Directory Exist
         run: |
@@ -46,19 +86,21 @@ jobs:
 
       - name: Process All IPAs
         env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_TAG: ${{ steps.settings.outputs.release_tag }}
+          RUN_MODE: ${{ steps.settings.outputs.run_mode }}
           REPOSITORY: ${{ github.repository }}
           REPOSITORY_OWNER: ${{ github.repository_owner }}
-          REPOSITORY_NAME: ${{ github.event.repository.name }}
+          REPOSITORY_NAME: ${{ github.event.repository.name || github.event.repository.name }}
         run: |
           set -euo pipefail
 
           mapfile -d '' IPA_FILES < <(find assets -type f -iname '*.ipa' -print0)
           if [ "${#IPA_FILES[@]}" -eq 0 ]; then
-            echo "No IPA files found in release ${RELEASE_TAG}"
+            echo "::error::No IPA files found in release ${RELEASE_TAG}"
             exit 1
           fi
 
+          PROCESSED_COUNT=0
           for IPA_PATH in "${IPA_FILES[@]}"; do
             echo "Processing: ${IPA_PATH}"
             rm -rf extracted
@@ -69,6 +111,7 @@ jobs:
               echo "::warning::Skipping ${IPA_PATH}: Payload directory is missing"
               continue
             fi
+
             APP_DIR=$(find extracted/Payload -maxdepth 1 -type d -name '*.app' -print -quit)
             if [ -z "$APP_DIR" ] || [ ! -f "$APP_DIR/Info.plist" ]; then
               echo "::warning::Skipping ${IPA_PATH}: no valid .app/Info.plist found"
@@ -76,12 +119,11 @@ jobs:
             fi
 
             plistutil -i "$APP_DIR/Info.plist" -f json -o info.json
-
             APP_NAME=$(jq -r '.CFBundleDisplayName // .CFBundleName // "Unknown"' info.json)
             BUNDLE_ID=$(jq -r '.CFBundleIdentifier // empty' info.json)
             VERSION=$(jq -r '.CFBundleShortVersionString // .CFBundleVersion // "Unknown"' info.json)
 
-            if [ -z "$BUNDLE_ID" ] || [ "$BUNDLE_ID" = "Unknown" ]; then
+            if [ -z "$BUNDLE_ID" ]; then
               echo "::warning::Skipping ${IPA_PATH}: bundle identifier is missing"
               continue
             fi
@@ -92,9 +134,6 @@ jobs:
 
             ICON_FILE="icons/${BUNDLE_ID}.png"
             ICON_FOUND="false"
-
-            # Prefer icon filenames declared in Info.plist. Many modern apps keep
-            # their icons only in Assets.car, which this workflow cannot decode.
             mapfile -t ICON_NAMES < <(jq -r '
               [
                 .CFBundleIcons.CFBundlePrimaryIcon.CFBundleIconFiles[]?,
@@ -118,9 +157,14 @@ jobs:
               ICON_URL="https://${REPOSITORY_OWNER}.github.io/${REPOSITORY_NAME}/${ICON_FILE}"
             fi
 
-            echo "App: ${APP_NAME}"
-            echo "Bundle ID: ${BUNDLE_ID}"
-            echo "Version: ${VERSION}"
+            # Production runs must never replace a newer catalog version with an older one.
+            CURRENT_VERSION=$(jq -r --arg bundle "$BUNDLE_ID" '.apps[]? | select(.bundleIdentifier == $bundle) | .version' apps.json | head -n 1)
+            if [ "$RUN_MODE" = "production" ] && [ -n "$CURRENT_VERSION" ] && [ "$CURRENT_VERSION" != "null" ]; then
+              if dpkg --compare-versions "$VERSION" lt "$CURRENT_VERSION"; then
+                echo "::warning::Skipping downgrade for ${APP_NAME}: catalog has ${CURRENT_VERSION}, release has ${VERSION}"
+                continue
+              fi
+            fi
 
             jq \
               --arg bundle "$BUNDLE_ID" \
@@ -144,20 +188,37 @@ jobs:
                 }]
               ' apps.json > apps.json.tmp
             mv apps.json.tmp apps.json
+            PROCESSED_COUNT=$((PROCESSED_COUNT + 1))
           done
 
-          echo "Catalog validation:"
+          if [ "$PROCESSED_COUNT" -eq 0 ]; then
+            echo "::error::No valid IPA applications were added to the catalog"
+            exit 1
+          fi
+
           jq -e '.apps | type == "array"' apps.json >/dev/null
+          echo "Successfully processed ${PROCESSED_COUNT} IPA(s)"
           jq -r '.apps[] | [.name, .bundleIdentifier, .version] | @tsv' apps.json
 
-      - name: Commit Changes
+      - name: Upload test results
+        if: steps.settings.outputs.run_mode == 'test'
+        uses: actions/upload-artifact@v4
+        with:
+          name: abels-repo-test-${{ steps.settings.outputs.release_tag }}
+          path: |
+            apps.json
+            icons/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Commit Production Changes
+        if: steps.settings.outputs.run_mode == 'production'
         env:
           BRANCH_NAME: ${{ github.event.repository.default_branch }}
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
           git add apps.json icons/
 
           if git diff --cached --quiet; then
