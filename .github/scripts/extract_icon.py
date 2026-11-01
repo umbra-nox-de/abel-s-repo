@@ -61,41 +61,37 @@ def main():
     except Exception:
         pass
 
-    # 1. Prefer the icon files explicitly named by Info.plist.
+    # 1. Prefer a valid standalone PNG named by Info.plist.
     standalone = []
     for name in names:
         base = Path(name).name
         standalone.extend(p for p in APP_DIR.rglob("*.png")
                           if p.stem.lower().startswith(base.lower()))
     source = best(standalone)
-
-    # 2. If no readable standalone PNG exists, unpack compiled asset catalogs.
-    if source is None:
-        with tempfile.TemporaryDirectory(prefix="app-icons-") as tmp:
-            tmpdir = Path(tmp)
-            extracted = tmpdir / "assets"
-            extracted.mkdir()
-            for car in APP_DIR.rglob("Assets.car"):
-                try:
-                    subprocess.run(
-                        ["python3", str(CAR_UNPACKER), str(car), str(extracted)],
-                        check=True, capture_output=True, text=True, timeout=180
-                    )
-                except Exception as exc:
-                    print(f"Assets.car extraction warning ({car}): {exc}", file=sys.stderr)
-            pngs = list(extracted.rglob("*.png"))
-            preferred = [p for p in pngs if "appicon" in p.name.lower() or "app-icon" in p.name.lower()]
-            source = best(preferred) or best(pngs)
-            if source is not None:
-                if normalize(source, OUTPUT):
-                    print(f"ICON_SOURCE=Assets.car:{source.name}")
-                    return 0
-                source = None
-
-    # 3. Normalize standalone icons to a consistent, valid PNG.
     if source is not None and normalize(source, OUTPUT):
         print(f"ICON_SOURCE=Info.plist:{source.name}")
         return 0
+
+    # 2. If standalone files are absent, corrupt, or unsupported (for example CgBI),
+    # unpack compiled asset catalogs and choose the largest square app-icon rendition.
+    with tempfile.TemporaryDirectory(prefix="app-icons-") as tmp:
+        tmpdir = Path(tmp)
+        extracted = tmpdir / "assets"
+        extracted.mkdir()
+        for car in APP_DIR.rglob("Assets.car"):
+            try:
+                subprocess.run(
+                    ["python3", str(CAR_UNPACKER), str(car), str(extracted)],
+                    check=True, capture_output=True, text=True, timeout=180
+                )
+            except Exception as exc:
+                print(f"Assets.car extraction warning ({car}): {exc}", file=sys.stderr)
+        pngs = list(extracted.rglob("*.png"))
+        preferred = [p for p in pngs if "appicon" in p.name.lower() or "app-icon" in p.name.lower()]
+        source = best(preferred) or best(pngs)
+        if source is not None and normalize(source, OUTPUT):
+            print(f"ICON_SOURCE=Assets.car:{source.name}")
+            return 0
 
     OUTPUT.unlink(missing_ok=True)
     print("ICON_SOURCE=default-fallback")
