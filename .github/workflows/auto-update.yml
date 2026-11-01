@@ -58,7 +58,14 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libplist-utils jq unzip
+          sudo apt-get install -y libplist-utils jq unzip imagemagick gcc git curl
+
+          # Build Apple's LZFSE decoder for compiled Assets.car renditions.
+          git clone --depth 1 https://github.com/lzfse/lzfse.git "$RUNNER_TEMP/lzfse-src"
+          gcc -O2 -o "$RUNNER_TEMP/lzfse" "$RUNNER_TEMP"/lzfse-src/src/lzfse_*.c "$RUNNER_TEMP"/lzfse-src/src/lzvn_*.c -I"$RUNNER_TEMP/lzfse-src/src"
+
+          # Pin the Assets.car parser to a known commit for repeatable builds.
+          curl -fsSL "https://raw.githubusercontent.com/xiongnemo/car-unpacker-py/090837ee7d26363da0b96147e90584c6df9e9ccc/car_unpacker.py" -o "$RUNNER_TEMP/car_unpacker.py"
 
       - name: Download Release Assets
         env:
@@ -133,28 +140,19 @@ jobs:
             DOWNLOAD_URL="https://github.com/${REPOSITORY}/releases/download/${RELEASE_TAG}/${IPA_FILE_URL}"
 
             ICON_FILE="icons/${BUNDLE_ID}.png"
-            ICON_FOUND="false"
-            mapfile -t ICON_NAMES < <(jq -r '
-              [
-                .CFBundleIcons.CFBundlePrimaryIcon.CFBundleIconFiles[]?,
-                .CFBundleIconFiles[]?
-              ] | .[]
-            ' info.json 2>/dev/null || true)
+            ICON_NAMES_JSON="$RUNNER_TEMP/${BUNDLE_ID//[^a-zA-Z0-9._-]/_}-icon-names.json"
+            jq '[
+              .CFBundleIcons.CFBundlePrimaryIcon.CFBundleIconFiles[]?,
+              .CFBundleIconFiles[]?
+            ] | map(select(type == "string" and length > 0))' info.json > "$ICON_NAMES_JSON"
 
-            for ICON_NAME in "${ICON_NAMES[@]}"; do
-              ICON_CANDIDATE=$(find "$APP_DIR" -type f -iname "${ICON_NAME}*.png" -printf '%s\t%p\n' | sort -nr | head -n 1 | cut -f2-)
-              if [ -n "$ICON_CANDIDATE" ]; then
-                cp "$ICON_CANDIDATE" "$ICON_FILE"
-                ICON_FOUND="true"
-                break
-              fi
-            done
-
-            if [ "$ICON_FOUND" = "false" ]; then
-              echo "::warning::No standalone PNG icon found for ${BUNDLE_ID}; using icons/default.png"
-              ICON_URL="https://${REPOSITORY_OWNER}.github.io/${REPOSITORY_NAME}/icons/default.png"
-            else
+            if python3 .github/scripts/extract_icon.py "$APP_DIR" "$ICON_NAMES_JSON" "$ICON_FILE" "$RUNNER_TEMP/car_unpacker.py" "$RUNNER_TEMP/lzfse"; then
               ICON_URL="https://${REPOSITORY_OWNER}.github.io/${REPOSITORY_NAME}/${ICON_FILE}"
+              echo "Using extracted app icon for ${BUNDLE_ID}"
+            else
+              # The repo's existing standalone default.png is the guaranteed fallback.
+              echo "::warning::No valid app icon found for ${BUNDLE_ID}; using the repository's icons/default.png"
+              ICON_URL="https://${REPOSITORY_OWNER}.github.io/${REPOSITORY_NAME}/icons/default.png"
             fi
 
             # Production runs must never replace a newer catalog version with an older one.
