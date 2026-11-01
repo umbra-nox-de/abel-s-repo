@@ -12,6 +12,7 @@ ICON_NAMES_FILE = Path(sys.argv[2])
 OUTPUT = Path(sys.argv[3])
 CAR_UNPACKER = Path(sys.argv[4])
 LZFSE = Path(sys.argv[5])
+REPORT = Path(sys.argv[6]) if len(sys.argv) > 6 else None
 
 def image_size(path):
     try:
@@ -61,14 +62,21 @@ def main():
     except Exception:
         pass
 
+    diagnostics = {"declared_icon_names": names, "standalone_candidates": [], "asset_catalogs": [], "compiled_png_candidates": [], "selected_source": None}
+
     # 1. Prefer a valid standalone PNG named by Info.plist.
     standalone = []
     for name in names:
         base = Path(name).name
         standalone.extend(p for p in APP_DIR.rglob("*.png")
                           if p.stem.lower().startswith(base.lower()))
+    diagnostics["standalone_candidates"] = [{"path": str(p.relative_to(APP_DIR)), "dimensions": image_size(p)} for p in sorted(set(standalone))]
     source = best(standalone)
     if source is not None and normalize(source, OUTPUT):
+        diagnostics["selected_source"] = f"Info.plist:{source.name}"
+        if REPORT:
+            REPORT.parent.mkdir(parents=True, exist_ok=True)
+            REPORT.write_text(json.dumps(diagnostics, indent=2))
         print(f"ICON_SOURCE=Info.plist:{source.name}")
         return 0
 
@@ -79,14 +87,14 @@ def main():
         extracted = tmpdir / "assets"
         extracted.mkdir()
         for car in APP_DIR.rglob("Assets.car"):
+            diagnostics["asset_catalogs"].append(str(car.relative_to(APP_DIR)))
             try:
-                subprocess.run(
-                    ["python3", str(CAR_UNPACKER), str(car), str(extracted)],
-                    check=True, capture_output=True, text=True, timeout=180
-                )
+                subprocess.run(["python3", str(CAR_UNPACKER), str(car), str(extracted)], check=True, capture_output=True, text=True, timeout=180)
             except Exception as exc:
+                diagnostics.setdefault("parser_errors", []).append(str(exc))
                 print(f"Assets.car extraction warning ({car}): {exc}", file=sys.stderr)
         pngs = list(extracted.rglob("*.png"))
+        diagnostics["compiled_png_candidates"] = [{"path": str(p.relative_to(extracted)), "dimensions": image_size(p)} for p in sorted(pngs)]
         # Only accept renditions whose names match Apple's declared icon asset
         # or clearly identify themselves as an app icon. Never choose an arbitrary
         # largest image (which can be an ad, splash screen, or tracking asset).
@@ -103,9 +111,16 @@ def main():
                 preferred.append(path)
         source = best(preferred)
         if source is not None and normalize(source, OUTPUT):
+            diagnostics["selected_source"] = f"Assets.car:{source.name}"
+            if REPORT:
+                REPORT.parent.mkdir(parents=True, exist_ok=True)
+                REPORT.write_text(json.dumps(diagnostics, indent=2))
             print(f"ICON_SOURCE=Assets.car:{source.name}")
             return 0
 
+    if REPORT:
+        REPORT.parent.mkdir(parents=True, exist_ok=True)
+        REPORT.write_text(json.dumps(diagnostics, indent=2))
     OUTPUT.unlink(missing_ok=True)
     print("ICON_SOURCE=default-fallback")
     return 1
