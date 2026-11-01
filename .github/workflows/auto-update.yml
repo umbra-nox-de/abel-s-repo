@@ -143,8 +143,10 @@ jobs:
             ICON_NAMES_JSON="$RUNNER_TEMP/${BUNDLE_ID//[^a-zA-Z0-9._-]/_}-icon-names.json"
             jq '[
               .CFBundleIcons.CFBundlePrimaryIcon.CFBundleIconFiles[]?,
-              .CFBundleIconFiles[]?
-            ] | map(select(type == "string" and length > 0))' info.json > "$ICON_NAMES_JSON"
+              .CFBundleIcons.CFBundlePrimaryIcon.CFBundleIconName?,
+              .CFBundleIconFiles[]?,
+              .CFBundleIconName?
+            ] | map(select(type == "string" and length > 0)) | unique' info.json > "$ICON_NAMES_JSON"
 
             if python3 .github/scripts/extract_icon.py "$APP_DIR" "$ICON_NAMES_JSON" "$ICON_FILE" "$RUNNER_TEMP/car_unpacker.py" "$RUNNER_TEMP/lzfse"; then
               ICON_URL="https://${REPOSITORY_OWNER}.github.io/${REPOSITORY_NAME}/${ICON_FILE}"
