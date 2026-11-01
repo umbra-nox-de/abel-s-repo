@@ -58,7 +58,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libplist-utils jq unzip imagemagick gcc git curl
+          sudo apt-get install -y libplist-utils jq unzip imagemagick pngcrush gcc git curl
 
           # Build Apple's LZFSE decoder for compiled Assets.car renditions.
           git clone --depth 1 https://github.com/lzfse/lzfse.git "$RUNNER_TEMP/lzfse-src"
