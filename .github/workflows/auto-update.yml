@@ -140,6 +140,8 @@ jobs:
             DOWNLOAD_URL="https://github.com/${REPOSITORY}/releases/download/${RELEASE_TAG}/${IPA_FILE_URL}"
 
             ICON_FILE="icons/${BUNDLE_ID}.png"
+            mkdir -p icon-diagnostics
+            ICON_REPORT="icon-diagnostics/${BUNDLE_ID//[^a-zA-Z0-9._-]/_}.json"
             ICON_NAMES_JSON="$RUNNER_TEMP/${BUNDLE_ID//[^a-zA-Z0-9._-]/_}-icon-names.json"
             jq '[
               .CFBundleIcons.CFBundlePrimaryIcon.CFBundleIconFiles[]?,
@@ -148,7 +150,7 @@ jobs:
               .CFBundleIconName?
             ] | map(select(type == "string" and length > 0)) | unique' info.json > "$ICON_NAMES_JSON"
 
-            if python3 .github/scripts/extract_icon.py "$APP_DIR" "$ICON_NAMES_JSON" "$ICON_FILE" "$RUNNER_TEMP/car_unpacker.py" "$RUNNER_TEMP/lzfse"; then
+            if python3 .github/scripts/extract_icon.py "$APP_DIR" "$ICON_NAMES_JSON" "$ICON_FILE" "$RUNNER_TEMP/car_unpacker.py" "$RUNNER_TEMP/lzfse" "$ICON_REPORT"; then
               ICON_URL="https://${REPOSITORY_OWNER}.github.io/${REPOSITORY_NAME}/${ICON_FILE}"
               echo "Using extracted app icon for ${BUNDLE_ID}"
             else
@@ -208,6 +210,7 @@ jobs:
           path: |
             apps.json
             icons/
+            icon-diagnostics/
           if-no-files-found: error
           retention-days: 14
 
