@@ -90,7 +90,7 @@ jobs:
           RUN_MODE: ${{ steps.settings.outputs.run_mode }}
           REPOSITORY: ${{ github.repository }}
           REPOSITORY_OWNER: ${{ github.repository_owner }}
-          REPOSITORY_NAME: ${{ github.event.repository.name || github.event.repository.name }}
+          REPOSITORY_NAME: ${{ github.event.repository.name }}
         run: |
           set -euo pipefail
 
