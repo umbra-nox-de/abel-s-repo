@@ -87,8 +87,21 @@ def main():
             except Exception as exc:
                 print(f"Assets.car extraction warning ({car}): {exc}", file=sys.stderr)
         pngs = list(extracted.rglob("*.png"))
-        preferred = [p for p in pngs if "appicon" in p.name.lower() or "app-icon" in p.name.lower()]
-        source = best(preferred) or best(pngs)
+        # Only accept renditions whose names match Apple's declared icon asset
+        # or clearly identify themselves as an app icon. Never choose an arbitrary
+        # largest image (which can be an ad, splash screen, or tracking asset).
+        normalized_names = {
+            "".join(ch for ch in Path(name).stem.lower() if ch.isalnum())
+            for name in names
+        }
+        preferred = []
+        for path in pngs:
+            stem = "".join(ch for ch in path.stem.lower() if ch.isalnum())
+            if any(n and (stem == n or stem.startswith(n)) for n in normalized_names):
+                preferred.append(path)
+            elif "appicon" in stem or "app-icon" in path.name.lower():
+                preferred.append(path)
+        source = best(preferred)
         if source is not None and normalize(source, OUTPUT):
             print(f"ICON_SOURCE=Assets.car:{source.name}")
             return 0
