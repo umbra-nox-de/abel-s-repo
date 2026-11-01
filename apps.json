@@ -103,16 +103,6 @@
       "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
     },
     {
-      "name": "Instagram",
-      "bundleIdentifier": "com.burbn.instagram",
-      "developerName": "Abel",
-      "version": "436.0.0",
-      "versionDate": "2026-07-20",
-      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/multi_v4/Instagram.-.KamoHacks.436.0.0.ipa",
-      "localizedDescription": "Instagram IPA",
-      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
-    },
-    {
       "name": "Facebook",
       "bundleIdentifier": "com.facebook.Facebook",
       "developerName": "Abel",
@@ -190,6 +180,36 @@
       "versionDate": "2026-09-27",
       "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/v24/Sherlock_2.0_496g9r57.ipa",
       "localizedDescription": "Sherlock IPA",
+      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
+    },
+    {
+      "name": "Instagram",
+      "bundleIdentifier": "com.burbn.instagram",
+      "developerName": "Abel",
+      "version": "453.0.0",
+      "versionDate": "2026-11-01",
+      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/v25/Instagram.-.KamoHacks.453.0.0.ipa",
+      "localizedDescription": "Instagram IPA",
+      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
+    },
+    {
+      "name": "Airport Inc. ",
+      "bundleIdentifier": "com.jettoast.aero",
+      "developerName": "Abel",
+      "version": "1.5.13",
+      "versionDate": "2026-11-01",
+      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/v25/Airport.Inc.-.KamoHacks.1.5.13.ipa",
+      "localizedDescription": "Airport Inc.  IPA",
+      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
+    },
+    {
+      "name": "Idle Apartment Tycoon ✨",
+      "bundleIdentifier": "com.leyoios.idleapartmenttycoon",
+      "developerName": "Abel",
+      "version": "0.00.98",
+      "versionDate": "2026-11-01",
+      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/v25/idle-apartment-tycoon-IPAOMTK.COM.ipa",
+      "localizedDescription": "Idle Apartment Tycoon ✨ IPA",
       "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
     }
   ]
