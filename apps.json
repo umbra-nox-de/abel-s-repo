@@ -211,6 +211,16 @@
       "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/v25/idle-apartment-tycoon-IPAOMTK.COM.ipa",
       "localizedDescription": "Idle Apartment Tycoon ✨ IPA",
       "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
+    },
+    {
+      "name": "Paperback",
+      "bundleIdentifier": "dev.faizandurrani.moe.paperback.app",
+      "developerName": "Abel",
+      "version": "0.8.11",
+      "versionDate": "2026-11-08",
+      "downloadURL": "https://github.com/umbra-nox-de/abel-s-repo/releases/download/v26/Paperback.ipa",
+      "localizedDescription": "Paperback IPA",
+      "iconURL": "https://umbra-nox-de.github.io/abel-s-repo/icons/default.png"
     }
   ]
 }
